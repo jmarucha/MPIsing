@@ -68,8 +68,8 @@ void grid::print() {
         std::cout << std::flush;
 }
 
-void grid::save_PNG(const char * str) {
 #ifdef PNG
+void grid::save_PNG(const char * str) {
     if (prank != ROOT) return; 
     png::image<png::index_pixel_1> image(w, h);
     png::palette pal(2);
@@ -85,7 +85,5 @@ void grid::save_PNG(const char * str) {
     }
     image.set_palette(pal);
     image.write(str);
-#else
-    str = str;
-#endif
 }
+#endif

@@ -19,24 +19,15 @@ int main(int argc, char** argv) {
     // std::cout << prank << '/' << psize << std::endl;
     std::srand(std::time(0)+prank);
 
-    double start_time, end_time;
-    start_time = MPI_Wtime();
-
-    grid g(1000, 1000, 10000, 1.76, 0.);
-    for (int i = 0; i < 100; ++i) {
-        std::stringstream name;
-        name << "images/" << std::setw(5) << std::setfill('0');
-        name << i << ".png";
-        #ifdef PNG
-        g.gather();
-        g.save_PNG(name.str().c_str());
-        #endif
-        g.round();
-    }
-
-    end_time = MPI_Wtime();
-    if (prank == 0) {
-        std::cout << psize << ", " << end_time-start_time << std::endl;
+    for (float b = 0; b < 20.0; b+=0.05) {
+        grid g(1000, 1000, 100000, 1.76, 0.);
+        for (int i = 0; i < 1000; ++i) {
+            g.round();
+        }
+        int mag = g.magnetization();
+        if (prank == 0) {
+            std::cout << b << ", " << mag << std::endl;
+        }
     }
     MPI_Finalize();
     return 0;

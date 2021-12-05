@@ -55,6 +55,17 @@ void grid::gather() {
         byte_block_displacement, MPI_INT, ROOT, MPI_COMM_WORLD);
 }
 
+int grid::magnetization() {
+    int partial_sum = 0;
+    int sum;
+    int n = processed_subgrid->w * processed_subgrid->h;
+    for (int i = 0; i < n; ++i) {
+        partial_sum += 2*processed_subgrid->grid[i]-1;
+    }
+    MPI_Allreduce(&partial_sum, &sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    return sum;
+}
+
 void grid::print() {
     if (prank == ROOT) {
             for (int i = 0; i < h; ++i) {

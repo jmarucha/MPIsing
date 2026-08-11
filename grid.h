@@ -1,5 +1,5 @@
-#ifndef GRID
-#define GRID
+#ifndef GRID__H
+#define GRID__H
 #include "subgrid.h"
 
 struct grid {

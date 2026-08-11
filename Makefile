@@ -1,7 +1,8 @@
 CXX=mpic++
 CC=mpic++
 LD=${CXX}
-CXXFLAGS+=-Wall -Wextra -Werror -pedantic -std=c++2a -O2 -g
+# -Wall -Wextra -Werror -pedantic
+CXXFLAGS+= -std=c++2a -O2 -DPNG
 LDFLAGS+=-lm -lstdc++ $(CXXFLAGS) -lpng16
 
 OBJS=main.o subgrid.o grid.o

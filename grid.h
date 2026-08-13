@@ -22,8 +22,6 @@ struct grid {
     void round();
     void gather();
     int magnetization();
-    #ifdef PNG
-    void save_PNG(const char*);
-    #endif
+    void save_png(const char*);
 };
 #endif

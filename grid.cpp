@@ -6,6 +6,8 @@
 #endif
 
 #include "grid.h"
+#include <png++/palette.hpp>
+#include <png++/image.hpp>
 
 #define ROOT 0
 
@@ -79,8 +81,7 @@ void grid::print() {
         std::cout << std::flush;
 }
 
-#ifdef PNG
-void grid::save_PNG(const char * str) {
+void grid::save_png(const char * str) {
     if (prank != ROOT) return; 
     png::image<png::index_pixel_1> image(w, h);
     png::palette pal(2);
@@ -95,6 +96,10 @@ void grid::save_PNG(const char * str) {
         }
     }
     image.set_palette(pal);
-    image.write(str);
+    try {
+        image.write(str);
+    } catch (const png::std_error& e) {
+        fprintf(stderr, "Error writing to '%s'\n", str);
+        MPI_Abort(MPI_COMM_WORLD, 2137);
+    }
 }
-#endif

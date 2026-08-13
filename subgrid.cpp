@@ -73,21 +73,17 @@ void subgrid::tick() {
         if (random_y == 0) {
             int operation_completed;
             MPI_Test(requests.top_send(), &operation_completed, MPI_STATUS_IGNORE);
-            if (!operation_completed) {
-                MPI_Cancel(requests.top_send());
-                MPI_Wait(requests.top_send(), MPI_STATUS_IGNORE);
+            if (operation_completed) {
+                MPI_Start(requests.top_send());
             }
-            MPI_Start(requests.top_send());
         }
         //send bottom ghost
         if (random_y == h-1) {
             int operation_completed;
             MPI_Test(requests.bot_send(), &operation_completed, MPI_STATUS_IGNORE);
-            if (!operation_completed) {
-                MPI_Cancel(requests.bot_send());
-                MPI_Wait(requests.bot_send(), MPI_STATUS_IGNORE);
+            if (operation_completed) {
+                MPI_Start(requests.bot_send());
             }
-            MPI_Start(requests.bot_send());
         }
     }
 
@@ -131,18 +127,5 @@ void subgrid::conclude() {
     if (update_ghost) {
         MPI_Start(requests.bot_recv());
         MPI_Wait(requests.bot_recv(), MPI_STATUS_IGNORE);
-    }
-    int operation_completed;
-    //cancel top ghost
-    MPI_Test(requests.top_send(), &operation_completed, MPI_STATUS_IGNORE);
-    if (!operation_completed) {
-        MPI_Cancel(requests.top_send());
-        MPI_Wait(requests.top_send(), MPI_STATUS_IGNORE);
-    }
-    //cancel bottom ghost
-    MPI_Test(requests.bot_send(), &operation_completed, MPI_STATUS_IGNORE);
-    if (!operation_completed) {
-        MPI_Cancel(requests.bot_send());
-        MPI_Wait(requests.bot_send(), MPI_STATUS_IGNORE);
     }
 }

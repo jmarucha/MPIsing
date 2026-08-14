@@ -3,25 +3,25 @@
 #include "subgrid.h"
 
 struct grid {
-    int psize;
-    int prank;
-    const int w, h;
-    int* block_sizes;
-    int* iter_number;
+  int psize;
+  int prank;
+  const int w, h;
+  int *block_sizes;
+  int *iter_number;
 
-    int* byte_block_size;
-    int* byte_block_displacement;
+  int *byte_block_size;
+  int *byte_block_displacement;
 
-    subgrid* processed_subgrid;
-    int* full_grid;
+  subgrid *processed_subgrid;
+  int *full_grid;
 
-    grid(int w, int h, int total_iters, double j, double field);
-    ~grid();
+  grid(int w, int h, int total_iters, double j, double field);
+  ~grid();
 
-    void print();
-    void round();
-    void gather();
-    double magnetization();
-    void save_png(const char*);
+  void print();
+  void round();
+  void gather();
+  double magnetization();
+  void save_png(const char *);
 };
 #endif

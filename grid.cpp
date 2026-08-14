@@ -1,103 +1,98 @@
-#include <mpi.h>
 #include <iostream>
+#include <mpi.h>
 
 #include <png++/png.hpp>
 
 #include "grid.h"
-#include <png++/palette.hpp>
 #include <png++/image.hpp>
+#include <png++/palette.hpp>
 
 #define ROOT 0
 
-grid::grid(int w, int h, int total_iters, double j, double field):
-w(w),h(h) {
-    full_grid = new int[w*h];
-    MPI_Comm_size(MPI_COMM_WORLD, &psize);
-    MPI_Comm_rank(MPI_COMM_WORLD, &prank);
+grid::grid(int w, int h, int total_iters, double j, double field) : w(w), h(h) {
+  full_grid = new int[w * h];
+  MPI_Comm_size(MPI_COMM_WORLD, &psize);
+  MPI_Comm_rank(MPI_COMM_WORLD, &prank);
 
-    block_sizes = new int[psize];
-    iter_number = new int[psize];
-    byte_block_size = new int[psize];
-    byte_block_displacement = new int[psize];
-    int displacement = 0; 
-    for (int irank = 0; irank < psize; ++irank) {
-        block_sizes[irank] = h/psize + (irank < h % psize ? 1 : 0);
-        iter_number[irank] = block_sizes[irank]*total_iters/psize + (irank < h % psize ? 1 : 0);
+  block_sizes = new int[psize];
+  iter_number = new int[psize];
+  byte_block_size = new int[psize];
+  byte_block_displacement = new int[psize];
+  int displacement = 0;
+  for (int irank = 0; irank < psize; ++irank) {
+    block_sizes[irank] = h / psize + (irank < h % psize ? 1 : 0);
+    iter_number[irank] =
+        block_sizes[irank] * total_iters / psize + (irank < h % psize ? 1 : 0);
 
-        byte_block_size[irank] = block_sizes[irank]*w;
-        byte_block_displacement[irank] = displacement;
-        displacement += byte_block_size[irank];
-    }
-    processed_subgrid = new subgrid(w, block_sizes[prank], j, field);
+    byte_block_size[irank] = block_sizes[irank] * w;
+    byte_block_displacement[irank] = displacement;
+    displacement += byte_block_size[irank];
+  }
+  processed_subgrid = new subgrid(w, block_sizes[prank], j, field);
 }
 grid::~grid() {
-    delete[] block_sizes;
-    delete[] iter_number;
-    delete[] full_grid;
-    delete[] byte_block_size;
-    delete[] byte_block_displacement;
+  delete[] block_sizes;
+  delete[] iter_number;
+  delete[] full_grid;
+  delete[] byte_block_size;
+  delete[] byte_block_displacement;
 }
 
 void grid::round() {
-    for (int i = 0; i < iter_number[prank]; ++i) {
-        processed_subgrid->tick();
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
+  for (int i = 0; i < iter_number[prank]; ++i) {
+    processed_subgrid->tick();
+  }
+  MPI_Barrier(MPI_COMM_WORLD);
 }
 
 void grid::gather() {
-    MPI_Gatherv(
-        processed_subgrid->grid,
-        w*block_sizes[prank],
-        MPI_INT,
-        full_grid,
-        byte_block_size,
-        byte_block_displacement, MPI_INT, ROOT, MPI_COMM_WORLD);
+  MPI_Gatherv(processed_subgrid->grid, w * block_sizes[prank], MPI_INT,
+              full_grid, byte_block_size, byte_block_displacement, MPI_INT,
+              ROOT, MPI_COMM_WORLD);
 }
 
 double grid::magnetization() {
-    int partial_sum = 0;
-    int sum;
-    int n = processed_subgrid->w * processed_subgrid->h;
-    for (int i = 0; i < n; ++i) {
-        partial_sum += 2*processed_subgrid->grid[i]-1;
-    }
-    MPI_Allreduce(&partial_sum, &sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    return double(sum)/double(w)/double(h);
+  int partial_sum = 0;
+  int sum;
+  int n = processed_subgrid->w * processed_subgrid->h;
+  for (int i = 0; i < n; ++i) {
+    partial_sum += 2 * processed_subgrid->grid[i] - 1;
+  }
+  MPI_Allreduce(&partial_sum, &sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+  return double(sum) / double(w) / double(h);
 }
 
 void grid::print() {
-    if (prank == ROOT) {
-            for (int i = 0; i < h; ++i) {
-                for (int j = 0; j < w; ++j) {
-                    std::cout << (full_grid[j + w*i] ? "█" : " ");
-                }
-                std::cout << '\n';
-            }
-            std::cout << '\n';
-        }
-        std::cout << std::flush;
+  if (prank == ROOT) {
+    for (int i = 0; i < h; ++i) {
+      for (int j = 0; j < w; ++j) {
+        std::cout << (full_grid[j + w * i] ? "█" : " ");
+      }
+      std::cout << '\n';
+    }
+    std::cout << '\n';
+  }
+  std::cout << std::flush;
 }
 
-void grid::save_png(const char * str) {
-    if (prank != ROOT) return; 
-    png::image<png::index_pixel_1> image(w, h);
-    png::palette pal(2);
-    pal[0] = png::color(0xDC, 0x6E, 0x53);
-    pal[1] = png::color(0xCD, 0xE6, 0xD0);
-    for (png::uint_32 y = 0; y < image.get_height(); ++y)
-    {
-        for (png::uint_32 x = 0; x < image.get_width(); ++x)
-        {
-            image[y][x] = full_grid[w*y+x];
-            // non-checking equivalent of image.set_pixel(x, y, ...);
-        }
+void grid::save_png(const char *str) {
+  if (prank != ROOT)
+    return;
+  png::image<png::index_pixel_1> image(w, h);
+  png::palette pal(2);
+  pal[0] = png::color(0xDC, 0x6E, 0x53);
+  pal[1] = png::color(0xCD, 0xE6, 0xD0);
+  for (png::uint_32 y = 0; y < image.get_height(); ++y) {
+    for (png::uint_32 x = 0; x < image.get_width(); ++x) {
+      image[y][x] = full_grid[w * y + x];
+      // non-checking equivalent of image.set_pixel(x, y, ...);
     }
-    image.set_palette(pal);
-    try {
-        image.write(str);
-    } catch (const png::std_error& e) {
-        fprintf(stderr, "Error writing to '%s'\n", str);
-        MPI_Abort(MPI_COMM_WORLD, 2137);
-    }
+  }
+  image.set_palette(pal);
+  try {
+    image.write(str);
+  } catch (const png::std_error &e) {
+    fprintf(stderr, "Error writing to '%s'\n", str);
+    MPI_Abort(MPI_COMM_WORLD, 2137);
+  }
 }

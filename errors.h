@@ -1,5 +1,8 @@
+#ifndef ERRORS__H
+#define ERRORS__H
 enum __mpising_error_codes {
-    MPISING_ERR_MPI_INIT = 1,
-    MPISING_ERR_ARG_PARSE,
-    MPISING_ERR_WRITE_PNG
+  MPISING_ERR_MPI_INIT = 1,
+  MPISING_ERR_ARG_PARSE,
+  MPISING_ERR_WRITE_PNG
 };
+#endif

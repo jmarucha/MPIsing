@@ -1,9 +1,7 @@
 #include <mpi.h>
 #include <iostream>
 
-#ifdef PNG
 #include <png++/png.hpp>
-#endif
 
 #include "grid.h"
 #include <png++/palette.hpp>
@@ -57,7 +55,7 @@ void grid::gather() {
         byte_block_displacement, MPI_INT, ROOT, MPI_COMM_WORLD);
 }
 
-int grid::magnetization() {
+double grid::magnetization() {
     int partial_sum = 0;
     int sum;
     int n = processed_subgrid->w * processed_subgrid->h;
@@ -65,7 +63,7 @@ int grid::magnetization() {
         partial_sum += 2*processed_subgrid->grid[i]-1;
     }
     MPI_Allreduce(&partial_sum, &sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-    return sum;
+    return double(sum)/double(w)/double(h);
 }
 
 void grid::print() {

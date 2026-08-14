@@ -38,7 +38,7 @@ enum opt_codes {
 };
 
 static struct argp_option options[] = {
-  {"verbose", 'v', 0, 0, "Produce verbose output", OPT_GROUP_GENERAL},
+  {"verbose", 'v', 0, 0, "Produce verbose (per round) output", OPT_GROUP_GENERAL},
   {"width", 'w', "INT", 0, "Grid width", OPT_GROUP_GRID},
   {"height", 'h', "INT", 0, "Grid height", OPT_GROUP_GRID},
   {"flips", 'f', "INT", 0, "Flips per round", OPT_GROUP_ROUNDS},
@@ -137,6 +137,15 @@ parse_opt (int key, char *arg, struct argp_state *state)
 
 static struct argp argp = { options, parse_opt, 0, doc };
 
+void print_header() {
+    puts("time, magnetization");
+}
+
+void print_line(long long flips, double magnetization) {
+    printf("%lld, %f\n", flips, magnetization);
+
+}
+
 int main(int argc, char** argv) {
     error_t err;
     arguments args = {
@@ -182,10 +191,15 @@ int main(int argc, char** argv) {
             sprintf(filename, "%s/ROUND=%d.png", args.output_dir, i);
             g.save_png(filename);
         }
+        if (args.verbose) {
+            double mag = g.magnetization();
+            if (prank == 0)
+                print_line(i*args.flips, mag);
+        }
     }
-    int mag = g.magnetization();
+    double mag = g.magnetization();
     if (prank == 0) {
-        printf("%f, %d\n", args.mu, mag);
+        print_line(args.rounds*args.flips, mag);
     }
 
     MPI_Finalize();
